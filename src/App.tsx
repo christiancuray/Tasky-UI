@@ -14,7 +14,22 @@ import {
     deleteTask,
 } from "./services/tasksApi";
 
+import {
+    Check,
+    Layers3,
+    Circle,
+    Activity,
+    CircleCheck,
+    UserRound,
+    LogOut,
+    Plus,
+    RefreshCw,
+    Pencil,
+    Trash2,
+} from "lucide-react";
+
 import type { Task, TaskStatus } from "./services/tasksApi";
+import StatusBadge from "./components/StatusBadge";
 
 function App() {
     const [username, setUsername] = useState("");
@@ -32,6 +47,23 @@ function App() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [notice, setNotice] = useState("");
+    const [statusFilter, setStatusFilter] = useState<TaskStatus | "ALL">("ALL");
+
+    const totalTasks = tasks.length;
+
+    const todoTasks = tasks.filter((task) => task.status === "TODO").length;
+
+    const inProgressTasks = tasks.filter(
+        (task) => task.status === "IN_PROGRESS",
+    ).length;
+
+    const completedTasks = tasks.filter(
+        (task) => task.status === "DONE",
+    ).length;
+    // filtering task based on its status
+    const filteredTasks = tasks.filter(
+        (task) => statusFilter === "ALL" || task.status === statusFilter,
+    );
 
     async function loadTasks() {
         setTasksLoading(true);
@@ -168,9 +200,15 @@ function App() {
             setNotice("Task created successfully!");
             await loadTasks();
         } catch (err) {
+            const message =
+                err instanceof Error ? err.message : "Unknown error";
+
             setError(
-                err instanceof Error ? err.message : "Failed to create task",
+                `Task creation may have partially succeeded: ${message}. ` +
+                    "Check your task list before trying again.",
             );
+
+            // Do not automatically repeat the POST request.
         } finally {
             setSaving(false);
         }
@@ -269,145 +307,313 @@ function App() {
                     <button type="submit">Login</button>
                 </form>
 
-                {error && <p role="alert">{error}</p>}
+                {error && (
+                    <div className="error-message" role="alert">
+                        <strong>Something went wrong</strong>
+                        <p>{error}</p>
+                    </div>
+                )}
             </main>
         );
     }
 
     return (
-        <main className="container dashboard">
-            <header className="dashboard-header">
-                <div>
-                    <h1>Task Management</h1>
-                    <p>Welcome, {currentUser}!</p>
+        <div className="app-shell">
+            {/* Global navigation */}
+            <header className="app-navbar">
+                <div className="navbar-inner">
+                    <div className="brand">
+                        <span className="brand-icon">
+                            <Check size={25} strokeWidth={3} />
+                        </span>
+                        <span>Task Management</span>
+                    </div>
+
+                    <div className="navbar-user">
+                        <span className="user-avatar">
+                            <UserRound size={23} />
+                        </span>
+
+                        <span className="username">{currentUser}</span>
+
+                        <button
+                            className="logout-button"
+                            onClick={handleLogout}
+                            disabled={saving}
+                            title="Logout"
+                        >
+                            <LogOut size={18} />
+                            <span>Logout</span>
+                        </button>
+                    </div>
                 </div>
-                <button onClick={handleLogout} disabled={saving}>
-                    Logout
-                </button>
             </header>
 
-            <section>
-                <h2>Create a Task</h2>
-                <form onSubmit={handleCreate}>
-                    <label htmlFor="new-title">Task title</label>
-                    <input
-                        id="new-title"
-                        placeholder="What do you need to do?"
-                        value={newTitle}
-                        onChange={(e) => setNewTitle(e.target.value)}
-                        required
-                    />
-                    <button type="submit" disabled={saving}>
-                        {saving ? "Please wait..." : "Add Task"}
-                    </button>
-                </form>
-            </section>
+            <main className="dashboard">
+                {/* Hero banner */}
+                <section className="hero-banner">
+                    <div className="hero-content">
+                        <h1>My Tasks</h1>
+                        <p>Organize, track, and complete your work.</p>
+                    </div>
 
-            <section>
-                <div className="tasks-heading">
-                    <h2>My Tasks ({tasks.length})</h2>
-                    <button
-                        onClick={() => void loadTasks()}
-                        disabled={tasksLoading || saving}
-                    >
-                        Refresh
-                    </button>
-                </div>
+                    <div className="hero-art" aria-hidden="true">
+                        <div className="hero-circle hero-circle-one" />
+                        <div className="hero-circle hero-circle-two" />
 
-                {notice && <p className="success-message">{notice}</p>}
-                {error && <p role="alert">{error}</p>}
-                {tasksLoading && <p>Loading tasks...</p>}
+                        <div className="hero-clipboard">
+                            <div className="clipboard-clip" />
 
-                {!tasksLoading && !error && tasks.length === 0 && (
-                    <p>No tasks yet. Create your first task above!</p>
-                )}
+                            <div className="clipboard-row">
+                                <Check size={22} />
+                                <span />
+                            </div>
+                            <div className="clipboard-row">
+                                <Check size={22} />
+                                <span />
+                            </div>
+                            <div className="clipboard-row">
+                                <Check size={22} />
+                                <span />
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
-                <ul className="task-list">
-                    {tasks.map((task) => (
-                        <li key={task.taskId} className="task-item">
-                            {editingId === task.taskId ? (
-                                <form
-                                    className="edit-form"
-                                    onSubmit={handleUpdate}
-                                >
-                                    <label htmlFor={`title-${task.taskId}`}>
-                                        Title
-                                    </label>
-                                    <input
-                                        id={`title-${task.taskId}`}
-                                        value={editTitle}
-                                        onChange={(e) =>
-                                            setEditTitle(e.target.value)
-                                        }
-                                        required
-                                    />
+                {/* Statistics */}
+                <section className="stats-grid" aria-label="Task statistics">
+                    <div className="stat-card">
+                        <span className="stat-icon total-icon">
+                            <Layers3 size={26} />
+                        </span>
+                        <div>
+                            <span className="stat-label">Total Tasks</span>
+                            <strong>{totalTasks}</strong>
+                        </div>
+                    </div>
 
-                                    <label htmlFor={`status-${task.taskId}`}>
-                                        Status
-                                    </label>
-                                    <select
-                                        id={`status-${task.taskId}`}
-                                        value={editStatus}
-                                        onChange={(e) =>
-                                            setEditStatus(
-                                                e.target.value as TaskStatus,
-                                            )
-                                        }
+                    <div className="stat-card">
+                        <span className="stat-icon todo-icon">
+                            <Circle size={26} />
+                        </span>
+                        <div>
+                            <span className="stat-label">To Do</span>
+                            <strong>{todoTasks}</strong>
+                        </div>
+                    </div>
+
+                    <div className="stat-card progress-card">
+                        <span className="stat-icon progress-icon">
+                            <Activity size={26} />
+                        </span>
+                        <div>
+                            <span className="stat-label">In Progress</span>
+                            <strong>{inProgressTasks}</strong>
+                        </div>
+                    </div>
+
+                    <div className="stat-card completed-card">
+                        <span className="stat-icon completed-icon">
+                            <CircleCheck size={26} />
+                        </span>
+                        <div>
+                            <span className="stat-label">Completed</span>
+                            <strong>{completedTasks}</strong>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Create task */}
+                <section className="create-card">
+                    <h2>Add a New Task</h2>
+
+                    <form className="create-form" onSubmit={handleCreate}>
+                        <input
+                            aria-label="New task title"
+                            placeholder="e.g. Complete AWS project documentation"
+                            value={newTitle}
+                            onChange={(e) => setNewTitle(e.target.value)}
+                            required
+                        />
+
+                        <button type="submit" disabled={saving}>
+                            <Plus size={19} />
+                            {saving ? "Please wait..." : "Add Task"}
+                        </button>
+                    </form>
+                </section>
+
+                {/* Task list */}
+                <section className="tasks-section">
+                    <div className="tasks-toolbar">
+                        <h2>Your Tasks</h2>
+
+                        <div className="toolbar-actions">
+                            <label htmlFor="status-filter">
+                                Filter by status
+                            </label>
+
+                            <select
+                                id="status-filter"
+                                value={statusFilter}
+                                onChange={(e) =>
+                                    setStatusFilter(
+                                        e.target.value as TaskStatus | "ALL",
+                                    )
+                                }
+                            >
+                                <option value="ALL">All Tasks</option>
+                                <option value="TODO">To Do</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="DONE">Completed</option>
+                            </select>
+
+                            <button
+                                className="refresh-button"
+                                onClick={() => void loadTasks()}
+                                disabled={tasksLoading || saving}
+                            >
+                                <RefreshCw size={17} />
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    {notice && (
+                        <p className="success-message" role="status">
+                            {notice}
+                        </p>
+                    )}
+
+                    {error && (
+                        <div className="error-message" role="alert">
+                            <strong>Something went wrong</strong>
+                            <p>{error}</p>
+                        </div>
+                    )}
+
+                    {tasksLoading && (
+                        <div className="loading-state" role="status">
+                            <span className="spinner" aria-hidden="true" />
+                            Loading your tasks...
+                        </div>
+                    )}
+
+                    {!tasksLoading && !error && tasks.length === 0 && (
+                        <p>No tasks yet. Create your first task above!</p>
+                    )}
+
+                    {!tasksLoading &&
+                        !error &&
+                        tasks.length > 0 &&
+                        filteredTasks.length === 0 && (
+                            <p>No tasks match this filter.</p>
+                        )}
+
+                    <ul className="task-list" aria-busy={tasksLoading}>
+                        {filteredTasks.map((task) => (
+                            <li key={task.taskId} className="task-item">
+                                {editingId === task.taskId ? (
+                                    <form
+                                        className="edit-form"
+                                        onSubmit={handleUpdate}
                                     >
-                                        <option value="TODO">TODO</option>
-                                        <option value="IN_PROGRESS">
-                                            IN PROGRESS
-                                        </option>
-                                        <option value="DONE">DONE</option>
-                                    </select>
-
-                                    <div className="task-actions">
-                                        <button type="submit" disabled={saving}>
-                                            Save
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="secondary-button"
-                                            onClick={() => setEditingId(null)}
-                                            disabled={saving}
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </form>
-                            ) : (
-                                <>
-                                    <div className="task-details">
-                                        <strong>{task.title}</strong>
-                                        <span className="task-status">
-                                            {task.status.replaceAll("_", " ")}
-                                        </span>
-                                    </div>
-
-                                    <div className="task-actions">
-                                        <button
-                                            onClick={() => startEditing(task)}
-                                            disabled={saving}
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            className="danger-button"
-                                            onClick={() =>
-                                                void handleDelete(task.taskId)
+                                        <label htmlFor={`title-${task.taskId}`}>
+                                            Title
+                                        </label>
+                                        <input
+                                            id={`title-${task.taskId}`}
+                                            value={editTitle}
+                                            onChange={(e) =>
+                                                setEditTitle(e.target.value)
                                             }
-                                            disabled={saving}
+                                            required
+                                        />
+
+                                        <label
+                                            htmlFor={`status-${task.taskId}`}
                                         >
-                                            Delete
-                                        </button>
-                                    </div>
-                                </>
-                            )}
-                        </li>
-                    ))}
-                </ul>
-            </section>
-        </main>
+                                            Status
+                                        </label>
+                                        <select
+                                            id={`status-${task.taskId}`}
+                                            value={editStatus}
+                                            onChange={(e) =>
+                                                setEditStatus(
+                                                    e.target
+                                                        .value as TaskStatus,
+                                                )
+                                            }
+                                        >
+                                            <option value="TODO">To Do</option>
+                                            <option value="IN_PROGRESS">
+                                                In Progress
+                                            </option>
+                                            <option value="DONE">
+                                                Completed
+                                            </option>
+                                        </select>
+
+                                        <div className="task-actions">
+                                            <button
+                                                type="submit"
+                                                disabled={saving}
+                                            >
+                                                <Check size={16} />
+                                                Save
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="secondary-button"
+                                                onClick={() =>
+                                                    setEditingId(null)
+                                                }
+                                                disabled={saving}
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </form>
+                                ) : (
+                                    <>
+                                        <div className="task-details">
+                                            <strong>{task.title}</strong>
+                                        </div>
+
+                                        <StatusBadge status={task.status} />
+
+                                        <div className="task-actions">
+                                            <button
+                                                onClick={() =>
+                                                    startEditing(task)
+                                                }
+                                                disabled={saving}
+                                            >
+                                                <Pencil size={16} />
+                                                Edit
+                                            </button>
+
+                                            <button
+                                                className="danger-button"
+                                                onClick={() =>
+                                                    void handleDelete(
+                                                        task.taskId,
+                                                    )
+                                                }
+                                                disabled={saving}
+                                            >
+                                                <Trash2 size={16} />
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            </main>
+        </div>
     );
 }
 
