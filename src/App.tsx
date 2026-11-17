@@ -430,7 +430,7 @@ function App() {
                     <form className="create-form" onSubmit={handleCreate}>
                         <input
                             aria-label="New task title"
-                            placeholder="e.g. Complete AWS project documentation"
+                            placeholder="Write Essay"
                             value={newTitle}
                             onChange={(e) => setNewTitle(e.target.value)}
                             required
