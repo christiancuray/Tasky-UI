@@ -1,6 +1,6 @@
 # Serverless Task Management Frontend
 
-A React and TypeScript web application for signing in and viewing tasks through the Serverless Task Management API. The frontend uses AWS Cognito for authentication and sends authenticated requests to the API.
+A completed React and TypeScript web application for managing tasks through the Serverless Task Management API. Users can sign in, search and sort tasks, filter by status, and create, view, edit, and delete tasks.
 
 ## Project Goals
 
@@ -29,17 +29,7 @@ Amazon Cognito      Task API (API Gateway)
 1. The user signs in with their Cognito username and password.
 2. AWS Amplify manages the Cognito session.
 3. The frontend obtains the session ID token and sends it to the task API.
-4. The API returns the authenticated user's tasks for display.
-
-## Tech Stack
-
-| Technology | Purpose |
-| ---------- | ------- |
-| React | User interface |
-| TypeScript | Application code and type checking |
-| Vite | Local development server and production build |
-| AWS Amplify Auth | Cognito sign-in and session handling |
-| npm | Dependency and script management |
+4. The API returns the authenticated user's tasks. The frontend supports task search, sorting, status filtering, creation, editing, and deletion.
 
 ## Project Structure
 
@@ -60,6 +50,10 @@ frontend/
 ├── tsconfig*.json             # TypeScript configuration
 └── vite.config.ts             # Vite configuration
 ```
+
+## User Interface
+
+![Task management frontend](public/UI.png)
 
 ## Local Development Setup
 
@@ -88,15 +82,13 @@ VITE_COGNITO_CLIENT_ID=<user-pool-client-id>
 VITE_AWS_REGION=<region>
 ```
 
-Use the API URL, Cognito user pool ID, and app client ID for the same deployment. Set each variable to its value only; do not include a variable name or label inside the value. Vite exposes variables prefixed with `VITE_` to browser code, so do not put secrets in this file.
-
 ### 3. Start the development server
 
 ```bash
 npm run dev
 ```
 
-Open the local URL printed by Vite, usually `http://localhost:5173`. The API must allow that page's origin through its CORS configuration.
+Open the local URL printed by Vite: `http://localhost:5173`
 
 ## Available Commands
 
@@ -107,19 +99,18 @@ npm run build    # Type-check and create a production build in dist/
 npm run preview  # Preview the production build locally
 ```
 
-## Configuration and Security
-
-- `.env.local` is for local configuration and should not be committed.
-- Cognito credentials are entered by the user and handled by AWS Amplify Auth.
-- The frontend sends the Cognito ID token in the `Authorization` header for protected API requests.
-- Production builds require the appropriate environment variables at build time.
-- The API's CORS allowed origin must match the deployed frontend origin.
-
 ## Current Functionality
 
 - Cognito username and password sign-in.
 - Session restoration when the application loads.
 - Authenticated retrieval and display of the signed-in user's tasks.
+- Search and sort tasks.
+- Filter tasks by status.
+- Create tasks.
+- Edit task titles and statuses.
+- Delete tasks.
 - Sign-out and task-list refresh.
 
-Task creation, editing, and deletion are not currently available in the frontend.
+## Project Status
+
+The frontend is complete for its current scope and ready to run against a configured deployment of the task API. It provides authentication and full task management, including search, sorting, and status filtering. Setup and build commands are documented above.
