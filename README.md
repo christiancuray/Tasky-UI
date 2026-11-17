@@ -1,4 +1,4 @@
-# Serverless Task Management Frontend
+# Serverless Task Management UI
 
 A completed React and TypeScript web application for managing tasks through the Serverless Task Management API. Users can sign in, search and sort tasks, filter by status, and create, view, edit, and delete tasks.
 
