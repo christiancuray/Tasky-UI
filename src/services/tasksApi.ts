@@ -11,7 +11,11 @@ export interface Task {
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-export async function getTasks(): Promise<Task[]> {
+async function apiRequest<T>(
+    path: string,
+    method: "GET" | "POST" | "PUT" | "DELETE",
+    body?: object,
+): Promise<T> {
     if (!API_URL) {
         throw new Error("VITE_API_URL is missing");
     }
@@ -25,23 +29,60 @@ export async function getTasks(): Promise<Task[]> {
     }
 
     // Call the protected API Gateway endpoint.
-    const response = await fetch(API_URL, {
-        method: "GET",
+    const response = await fetch(`${API_URL}${path}`, {
+        method,
         headers: {
             Authorization: token,
             Accept: "application/json",
+            ...(body ? { "Content-Type": "application/json" } : {}),
         },
+        ...(body ? { body: JSON.stringify(body) } : {}),
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to load tasks: HTTP ${response.status}`);
+        let message = `Request Failed: HTTP ${response.status}`;
+
+        try {
+            const errBody = await response.json();
+            if (typeof errBody?.message == "string") {
+                message = errBody.message;
+            }
+        } catch {
+            // keep the http status error
+        }
+        throw new Error(message);
+    }
+    // DELETE normally returns HTTP 204 with no body.
+    if (response.status === 204) {
+        return undefined as T;
     }
 
-    const data: unknown = await response.json();
+    return (await response.json()) as T;
+}
 
-    if (!Array.isArray(data)) {
-        throw new Error("Unexpected API response format");
-    }
+// Get req
+export function getTasks(): Promise<Task[]> {
+    return apiRequest<Task[]>("", "GET");
+}
 
-    return data as Task[];
+// Post req
+export function createTask(title: string): Promise<Task> {
+    return apiRequest<Task>("", "POST", { title });
+}
+
+// Put req
+export function updateTask(
+    taskId: string,
+    title: string,
+    status: TaskStatus,
+): Promise<Task> {
+    return apiRequest<Task>(`/${encodeURIComponent(taskId)}`, "PUT", {
+        title,
+        status,
+    });
+}
+
+// Delete req
+export function deleteTask(taskId: string): Promise<void> {
+    return apiRequest<void>(`/${encodeURIComponent(taskId)}`, "DELETE");
 }
